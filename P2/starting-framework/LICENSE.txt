@@ -1,0 +1,29 @@
+Copyright 2025 INFOB3TC teachers at Utrecht University
+
+This package is provided to students who participate in the B3TC course.
+
+Use is subject to the following conditions:
+
+* You **must not** copy code wholesale from elsewhere.
+
+* You **must not** use LLM or 'AI' tools (e.g. Copilot, Claude, ChatGPT, etc.) for this assignment, in any way at all.
+
+* You **must not** distribute this code.
+
+    For example, all the below are forbidden:
+
+    * Posting your code to a public GitHub repository.
+    * Allowing 'Copilot Recall' to spy on your screen.
+    * Feeding your code to ChatGPT, Claude, etc.
+
+* You must not modify this license file.
+
+* You take **full responsibility** for ensuring the authenticity, confidentiality, and lack of LLM or 'AI' output in your code.
+
+* You must engage in good faith with the teachers of the course & not try to mislead us.
+
+* You agree that breaking these rules constitutes cheating, academic misconduct, dishonesty, copyright infringement, perjury, moral turpitude, and fraud.
+
+* You acknowledge that you understand the entirety of this file and agree to be bound by it.
+
+* You acknowledge that you have been warned, and waive any right to plead ignorance of the rules.
