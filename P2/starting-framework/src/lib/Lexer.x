@@ -22,6 +22,7 @@ tokens :-
   turn                           { \s -> TTurn }
   case                           { \s -> TCase }
   of                             { \s -> TOf }
+  end                            { \s -> TEnd}
   left                           { \s -> TLeft }
   right                          { \s -> TRight }
   front                          { \s -> TFront }
