@@ -48,11 +48,14 @@ checkPatternMatch cmd = let
 
 
 getCommandPatterns :: Cmd -> [Pat]
-getCommandPatterns (Case _ (Alts a as)) = let
+getCommandPatterns (Case _ alts) = getCommandPatterns' alts
+
+getCommandPatterns' :: Alts -> [Pat]
+getCommandPatterns' (Alts alt alts) = let
                         --Turn Alt into [Pat]
                         getPattern (Alt pat _) = pat
-                        in map getPattern (a:as)
-getCommandPatterns _ = []
+                        in getPattern alt : getCommandPatterns' alts
+getCommandPatterns' _ = []
 
 --Helpers
 --Extracts rule name
