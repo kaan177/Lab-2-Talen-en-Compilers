@@ -97,4 +97,3 @@ patternToString CatchAllPat = "CatchAllPat"
 --                         getIndividualAlts (Alts a as) = a:as 
 --                         maybePatterns = map getPattern ( concatMap getIndividualAlts alts)
 --                         in undefined
-                        
