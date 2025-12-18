@@ -68,8 +68,8 @@ printSpace s =
 
 
 -- These three should be defined by you
-type Ident = ()
-type Commands = ()
+type Ident = String
+type Commands = Cmds
 type Heading = ()
 
 type Environment = Map Ident Commands
@@ -83,7 +83,14 @@ data Step =  Done  Space Pos Heading
 
 -- | Exercise 8
 toEnvironment :: String -> Environment
-toEnvironment = undefined
+toEnvironment input = let 
+              program = parser (alexScanTokens input) 
+              (Program rules) = program
+              in if checkProgram program then mapAllRules rules else undefined
+
+--Adds all rules to a map
+mapAllRules :: [Rule] -> Environment
+mapAllRules = foldr (\(Rule a b) -> Map.insert a b) Map.empty
 
 -- | Exercise 9
 step :: Environment -> ArrowState -> Step
