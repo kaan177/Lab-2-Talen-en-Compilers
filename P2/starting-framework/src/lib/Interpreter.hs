@@ -83,8 +83,8 @@ data Step =  Done  Space Pos Heading
 
 -- | Exercise 8
 toEnvironment :: String -> Environment
-toEnvironment input = let 
-              program = parser (alexScanTokens input) 
+toEnvironment input = let
+              program = parser (alexScanTokens input)
               (Program rules) = program
               in if checkProgram program then mapAllRules rules else undefined --Replace with Map.Empty?
 
@@ -116,11 +116,11 @@ step environment (ArrowState space pos heading (topStack:restStack)) = let
 handleGoCase :: ArrowState -> (ArrowState, String)
 handleGoCase (ArrowState space pos heading stack) = let
                                                    newPos = forwardPos pos heading
-                                                   in if isNothing $ Map.lookup newPos space 
+                                                   in if isNothing $ Map.lookup newPos space
                                                     --Is not is space, then would be out of bounds
                                                     then (ArrowState space pos heading stack, "Position is out of bounds, pos: " ++ show newPos)
                                                     --Otherwise we have a valid position
-                                                    else let 
+                                                    else let
                                                       content = space Map.! newPos
                                                       finalPos = if content == Empty || content == Lambda || content == Debris then newPos else pos
                                                       in (ArrowState space finalPos heading stack, "")
@@ -128,11 +128,11 @@ handleGoCase (ArrowState space pos heading stack) = let
 handleTakeCase :: ArrowState -> (ArrowState, String)
 handleTakeCase (ArrowState space pos heading stack) = let
                                                       newPos = forwardPos pos heading
-                                                      in if isNothing $ Map.lookup newPos space 
+                                                      in if isNothing $ Map.lookup newPos space
                                                         --Is not is space, then would be out of bounds
                                                         then (ArrowState space pos heading stack, "Position is out of bounds, pos: " ++ show newPos)
                                                         --Otherwise we have a valid position
-                                                        else let 
+                                                        else let
                                                           content = space Map.! newPos
                                                           --If content in front is Lambda or Debris, replace with empty, otherwise do nothing
                                                           newSpace = if content == Lambda || content == Debris then Map.insert newPos Empty space else space
@@ -141,11 +141,11 @@ handleTakeCase (ArrowState space pos heading stack) = let
 handleMarkCase :: ArrowState -> (ArrowState, String)
 handleMarkCase (ArrowState space pos heading stack) = let
                                                       newPos = forwardPos pos heading
-                                                      in if isNothing $ Map.lookup newPos space 
+                                                      in if isNothing $ Map.lookup newPos space
                                                         --Is not is space, then would be out of bounds
                                                         then (ArrowState space pos heading stack, "Position is out of bounds, pos: " ++ show newPos)
                                                         --Otherwise we have a valid position
-                                                        else let 
+                                                        else let
                                                           newSpace = Map.insert newPos Lambda space
                                                           in (ArrowState newSpace pos heading stack, "")
 
@@ -155,21 +155,27 @@ handleTurnCase (ArrowState space pos heading stack) Model.Right = ArrowState spa
 handleTurnCase (ArrowState space pos heading stack) _           = ArrowState space pos heading stack --Do nothing on turn forward
 
 handleCaseCase :: ArrowState -> Dir -> Alts -> ArrowState
-handleCaseCase (ArrowState space pos heading stack) dir _ = undefined
+handleCaseCase (ArrowState space pos heading stack) dir alts = let
+                                                            posToCheck = forwardPos pos (dirToHeading dir heading)
+                                                            contents = if isJust $ Map.lookup posToCheck space then space Map.! posToCheck else Boundary
+                                                            altList = altsToaltList alts
+                                                            (Alt _ cmds) = findAltMatch altList contents
+                                                            newCommands = cmdsToCmdList cmds
+                                                            in ArrowState space pos heading (newCommands ++ stack)
 
 --NOTE: Stack in state has already have its top Cmd removed
 handleIdentCase :: Environment -> ArrowState -> String -> (ArrowState, String)
 handleIdentCase env (ArrowState space pos heading stack) ruleName = let
                                      ruleExists = Map.lookup ruleName env
                                      --Error handling
-                                     in if isNothing ruleExists then (ArrowState space pos heading stack, "Could not find rule with name: " ++ ruleName) 
+                                     in if isNothing ruleExists then (ArrowState space pos heading stack, "Could not find rule with name: " ++ ruleName)
                                      --Return next state
                                      else (ArrowState space pos heading ((env Map.! ruleName) ++ stack), "")
 
 
 --Helpers
 forwardPos :: Pos -> Heading -> Pos
-forwardPos (x, y) heading = let 
+forwardPos (x, y) heading = let
                               (dirX, dirY) = case heading of
                                 North -> (0, 1)
                                 East  -> (1, 0)
@@ -177,8 +183,13 @@ forwardPos (x, y) heading = let
                                 West  -> (-1, 0)
                                 in (x+dirX, y+dirY)
 
+dirToHeading :: Dir -> Heading -> Heading
+dirToHeading Model.Front heading = heading
+dirToHeading Model.Left  heading = rotateLeft  heading
+dirToHeading Model.Right heading = rotateRight heading
+
 rotateRight :: Heading -> Heading
-rotateRight heading = let 
+rotateRight heading = let
                       newHeading = case heading of
                         North -> East
                         East  -> South
@@ -187,10 +198,28 @@ rotateRight heading = let
                       in newHeading
 
 rotateLeft :: Heading -> Heading
-rotateLeft heading = let 
+rotateLeft heading = let
                       newHeading = case heading of
                         North -> West
                         East  -> North
                         South -> East
                         West  -> South
                       in newHeading
+
+altsToaltList :: Alts -> [Alt]
+altsToaltList EmptyAlts = []
+altsToaltList (Alts alt alts) = alt : altsToaltList alts
+
+findAltMatch :: [Alt] -> Contents -> Alt
+--Can safely use head because we already checked earlier that there is always an exaustive case listing
+--Head is only used because it is possible that we have a normal match and the CatchAll pattern match (in which case that would be the last one)
+findAltMatch alts contents = head $ filter (`checkAltMatch` contents) alts
+
+checkAltMatch :: Alt -> Contents -> Bool
+checkAltMatch (Alt pat _) contents =
+                                (pat == EmptyPat    && contents == Empty)    ||
+                                (pat == LambdaPat   && contents == Lambda)   ||
+                                (pat == DebrisPat   && contents == Debris)   ||
+                                (pat == AsteroidPat && contents == Asteroid) ||
+                                (pat == BoundaryPat && contents == Boundary) ||
+                                (pat == CatchAllPat)

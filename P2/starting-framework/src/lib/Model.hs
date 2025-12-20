@@ -18,4 +18,4 @@ data Cmd = Go | Take | Mark | NothingCmd | Turn Dir | Case Dir Alts | Ident Stri
 data Dir = Left | Right | Front deriving Show
 data Alts = EmptyAlts | Alts Alt Alts deriving Show
 data Alt = Alt Pat Cmds deriving Show
-data Pat = EmptyPat | LambdaPat | DebrisPat | AsteroidPat | BoundaryPat | CatchAllPat deriving Show
+data Pat = EmptyPat | LambdaPat | DebrisPat | AsteroidPat | BoundaryPat | CatchAllPat deriving (Eq, Show)
