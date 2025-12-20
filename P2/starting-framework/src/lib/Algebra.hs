@@ -12,7 +12,7 @@ fold (doProgram, doRule, doCommand, doAlt) = undefined
 
 
 -- Exercise 6
-
+--Was easier to do without Algebra (because I did not understand how to use Algebra correctly in this context)
 checkProgram :: Program -> Bool
 checkProgram (Program rules) = checkAllRulesExist rules && checkRuleNamedStart rules && checkNoDuplicates rules && checkPatternMatches (concatMap getRuleCommands rules)
 
@@ -85,23 +85,3 @@ patternToString DebrisPat = "DebrisPat"
 patternToString AsteroidPat = "AsteroidPat"
 patternToString BoundaryPat = "BoundaryPat"
 patternToString CatchAllPat = "CatchAllPat"
-
-
--- Probably wrong but keeping just in case
--- getCommandPatterns :: [Cmd] -> [Pat]
--- getCommandPatterns cmds = let
---                         --Get all that are of type Case
---                         hasPattern (Case _ a) = Just a
---                         hasPattern _ = Nothing
---                         maybeAlts = map hasPattern cmds
---                         --Turn [Maybe Alts] into [Alts] (And only the Alts that are not EmptyAlts)
---                         getAlts [] = []
---                         getAlts ((Just (Alts a b)):xs) = Alts a b : getAlts xs
---                         getAlts (_:xs) = getAlts xs
---                         alts = getAlts maybeAlts
---                         --Turn [Alts] into [Maybe Pat]
---                         getPattern (Alt pat _) = Just pat
---                         getPattern _ = Nothing
---                         getIndividualAlts (Alts a as) = a:as 
---                         maybePatterns = map getPattern ( concatMap getIndividualAlts alts)
---                         in undefined
