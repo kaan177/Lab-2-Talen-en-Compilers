@@ -70,7 +70,7 @@ printSpace s =
 -- These three should be defined by you
 type Ident = String
 type Commands = Cmds
-type Heading = ()
+data Heading = North | East | South | West
 
 type Environment = Map Ident Commands
 
@@ -86,7 +86,7 @@ toEnvironment :: String -> Environment
 toEnvironment input = let 
               program = parser (alexScanTokens input) 
               (Program rules) = program
-              in if checkProgram program then mapAllRules rules else undefined
+              in if checkProgram program then mapAllRules rules else undefined --Replace with Map.Empty?
 
 --Adds all rules to a map
 mapAllRules :: [Rule] -> Environment
