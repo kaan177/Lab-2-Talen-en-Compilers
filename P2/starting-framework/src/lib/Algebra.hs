@@ -50,6 +50,7 @@ checkPatternMatch cmd = let
 
 getCommandPatterns :: Cmd -> [Pat]
 getCommandPatterns (Case _ alts) = getCommandPatterns' alts
+getCommandPatterns _ = []
 
 getCommandPatterns' :: Alts -> [Pat]
 getCommandPatterns' (Alts alt alts) = let
