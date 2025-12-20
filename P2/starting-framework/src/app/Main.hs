@@ -11,11 +11,11 @@ import Data.Char (GeneralCategory(Space))
 -- Exercise 11
 interactive :: Environment -> ArrowState -> IO ()
 interactive e a = case (step e a) of
-    (Done s _ _) -> print ("final state: " ++ "\r\n" ++ "\r\n" ++ printSpace s ++ "\r\n")
-    (Fail errormessage)     -> print ("error: " ++ errormessage)
+    (Done s _ _) -> putStr ("final state: " ++ "\r\n" ++ "\r\n" ++ printSpace s ++ "\r\n")
+    (Fail errormessage)     -> putStr ("error: " ++ errormessage)
     (Ok (ArrowState s p h st)) -> let
-      printText = print (printSpace s ++ "\r\n" ++ "\r\n" ++ "press enter to continue... " ++ "\r\n")
-      recursivecall =  print("\r\n") >> interactive e (ArrowState s p h st) 
+      printText = putStr (printSpace s ++ "\r\n" ++ "\r\n" ++ "press enter to continue... " ++ "\r\n")
+      recursivecall =  putStr("\r\n") >> interactive e (ArrowState s p h st) 
       in printText >> getLine >> recursivecall --Get line is hier om te wachten voor user input
 
 
@@ -56,7 +56,7 @@ main = do
       space = runParceSpace spaceText 
       arrowstate = ArrowState space pos heading [Ident "start"]
       (finalSpace, _ , _) = batch environment arrowstate
-      in print ("final state: " ++ "\r\n" ++ "\r\n" ++ printSpace finalSpace ++ "\r\n")
+      in putStr ("final state: " ++ "\r\n" ++ "\r\n" ++ printSpace finalSpace ++ "\r\n")
     else let 
       environment = toEnvironment environmentText
       space = runParceSpace spaceText 
