@@ -43,6 +43,8 @@ parseSpace = do
     contents = choice (Prelude.map (\(f,c) -> f <$ symbol c) contentsTable)
       <* spaces
 
+runParceSpace :: String -> Space
+runParceSpace s = fst (head (parse parseSpace s))
 
 -- | Conversion table
 contentsTable :: [ (Contents, Char)]
