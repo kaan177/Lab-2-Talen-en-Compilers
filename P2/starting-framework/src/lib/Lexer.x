@@ -11,7 +11,7 @@ $alpha = [a-zA-Z]       -- alphabetic characters
 
 tokens :-
 
-  --$white+                        ;
+  $white+                        ;
   "->"                           { \s -> TArrow }
   "."                            { \s -> TPeriod }
   ","                            { \s -> TComma }
