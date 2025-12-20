@@ -69,7 +69,7 @@ printSpace s =
 
 -- These three should be defined by you
 type Ident = String
-type Commands = Cmds
+type Commands = [Cmd]
 data Heading = North | East | South | West
 
 type Environment = Map Ident Commands
@@ -90,10 +90,14 @@ toEnvironment input = let
 
 --Adds all rules to a map
 mapAllRules :: [Rule] -> Environment
-mapAllRules = foldr (\(Rule a b) -> Map.insert a b) Map.empty
+mapAllRules = foldr (\(Rule a b) -> Map.insert a (cmdsToCmdList b)) Map.empty
+
+cmdsToCmdList :: Cmds -> [Cmd]
+cmdsToCmdList EmptyCmds = []
+cmdsToCmdList (Cmds cmd cmds) = cmd : cmdsToCmdList cmds
 
 -- | Exercise 9
 step :: Environment -> ArrowState -> Step
-step = undefined
+step environment state = undefined
 
 
