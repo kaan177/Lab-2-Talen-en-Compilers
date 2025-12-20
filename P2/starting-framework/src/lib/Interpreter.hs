@@ -13,7 +13,7 @@ import Lexer
 import Parser
 import Model
 import Algebra
-
+import Data.Maybe
 
 data Contents  =  Empty | Lambda | Debris | Asteroid | Boundary
   deriving (Eq,Ord)
@@ -97,7 +97,62 @@ cmdsToCmdList EmptyCmds = []
 cmdsToCmdList (Cmds cmd cmds) = cmd : cmdsToCmdList cmds
 
 -- | Exercise 9
+--NOTE: when step is called on first turn, we will already have Stack contain the start function
 step :: Environment -> ArrowState -> Step
-step environment state = undefined
+step environment (ArrowState space pos heading []) = Done space pos heading
+step environment (ArrowState space pos heading (topStack:restStack)) = let
+                                                        cmd = topStack
+                                                        (newState, possibleError) = case cmd of
+                                                          Go -> (handleGoCase (ArrowState space pos heading restStack), "")
+                                                          Take -> (handleTakeCase (ArrowState space pos heading restStack), "")
+                                                          NothingCmd -> (ArrowState space pos heading restStack, "")
+                                                          (Ident funcName) -> handleIdentCase environment (ArrowState space pos heading restStack) funcName
+                                                          _ -> undefined
+                                                          --If no error then newState, otherwise error
+                                                        in if possibleError == "" then Ok newState else Fail possibleError
+
+handleGoCase :: ArrowState -> ArrowState
+handleGoCase (ArrowState space pos heading stack) = let
+                                                   newPos = forwardPos pos heading
+                                                   in if isNothing $ Map.lookup newPos space 
+                                                    --Is not is space, then would be out of bounds
+                                                    then ArrowState space pos heading stack
+                                                    --Otherwise we have a valid position
+                                                    else let 
+                                                      content = space Map.! newPos
+                                                      finalPos = if content == Empty || content == Lambda || content == Debris then newPos else pos
+                                                      in ArrowState space finalPos heading stack
+
+handleTakeCase :: ArrowState -> ArrowState
+handleTakeCase (ArrowState space pos heading stack) = let
+                                                      newPos = forwardPos pos heading
+                                                      in if isNothing $ Map.lookup newPos space 
+                                                        --Is not is space, then would be out of bounds
+                                                        then ArrowState space pos heading stack
+                                                        --Otherwise we have a valid position
+                                                        else let 
+                                                          content = space Map.! newPos
+                                                          --If content in front is Lambda or Debris, replace with empty, otherwise do nothing
+                                                          newSpace = if content == Lambda || content == Debris then Map.insert pos Empty space else space
+                                                          in ArrowState newSpace pos heading stack
 
 
+--NOTE: Stack in state has already have its top Cmd removed
+handleIdentCase :: Environment -> ArrowState -> String -> (ArrowState, String)
+handleIdentCase env (ArrowState space pos heading stack) ruleName = let
+                                     ruleExists = Map.lookup ruleName env
+                                     --Error handling
+                                     in if isNothing ruleExists then (ArrowState space pos heading stack, "Could not find rule with name: " ++ ruleName) 
+                                     --Return next state
+                                     else (ArrowState space pos heading ((env Map.! ruleName) ++ stack), "")
+
+
+--Helpers
+forwardPos :: Pos -> Heading -> Pos
+forwardPos (x, y) heading = let 
+                              (dirX, dirY) = case heading of
+                                North -> (0, 1)
+                                East  -> (1, 0)
+                                South -> (0, -1)
+                                West  -> (-1, 0)
+                                in (x+dirX, y+dirY)
