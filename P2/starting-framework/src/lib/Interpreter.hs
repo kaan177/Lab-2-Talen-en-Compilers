@@ -103,39 +103,59 @@ step environment (ArrowState space pos heading []) = Done space pos heading
 step environment (ArrowState space pos heading (topStack:restStack)) = let
                                                         cmd = topStack
                                                         (newState, possibleError) = case cmd of
-                                                          Go -> (handleGoCase (ArrowState space pos heading restStack), "")
-                                                          Take -> (handleTakeCase (ArrowState space pos heading restStack), "")
+                                                          Go -> handleGoCase (ArrowState space pos heading restStack)
+                                                          Take -> handleTakeCase (ArrowState space pos heading restStack)
+                                                          Mark -> handleMarkCase (ArrowState space pos heading restStack)
                                                           NothingCmd -> (ArrowState space pos heading restStack, "")
-                                                          (Ident funcName) -> handleIdentCase environment (ArrowState space pos heading restStack) funcName
-                                                          _ -> undefined
+                                                          Turn dir -> (handleTurnCase (ArrowState space pos heading restStack) dir, "")
+                                                          Case dir alts -> (handleCaseCase (ArrowState space pos heading restStack) dir alts, "")
+                                                          Ident funcName -> handleIdentCase environment (ArrowState space pos heading restStack) funcName
                                                           --If no error then newState, otherwise error
                                                         in if possibleError == "" then Ok newState else Fail possibleError
 
-handleGoCase :: ArrowState -> ArrowState
+handleGoCase :: ArrowState -> (ArrowState, String)
 handleGoCase (ArrowState space pos heading stack) = let
                                                    newPos = forwardPos pos heading
                                                    in if isNothing $ Map.lookup newPos space 
                                                     --Is not is space, then would be out of bounds
-                                                    then ArrowState space pos heading stack
+                                                    then (ArrowState space pos heading stack, "Position is out of bounds, pos: " ++ show newPos)
                                                     --Otherwise we have a valid position
                                                     else let 
                                                       content = space Map.! newPos
                                                       finalPos = if content == Empty || content == Lambda || content == Debris then newPos else pos
-                                                      in ArrowState space finalPos heading stack
+                                                      in (ArrowState space finalPos heading stack, "")
 
-handleTakeCase :: ArrowState -> ArrowState
+handleTakeCase :: ArrowState -> (ArrowState, String)
 handleTakeCase (ArrowState space pos heading stack) = let
                                                       newPos = forwardPos pos heading
                                                       in if isNothing $ Map.lookup newPos space 
                                                         --Is not is space, then would be out of bounds
-                                                        then ArrowState space pos heading stack
+                                                        then (ArrowState space pos heading stack, "Position is out of bounds, pos: " ++ show newPos)
                                                         --Otherwise we have a valid position
                                                         else let 
                                                           content = space Map.! newPos
                                                           --If content in front is Lambda or Debris, replace with empty, otherwise do nothing
-                                                          newSpace = if content == Lambda || content == Debris then Map.insert pos Empty space else space
-                                                          in ArrowState newSpace pos heading stack
+                                                          newSpace = if content == Lambda || content == Debris then Map.insert newPos Empty space else space
+                                                          in (ArrowState newSpace pos heading stack, "")
 
+handleMarkCase :: ArrowState -> (ArrowState, String)
+handleMarkCase (ArrowState space pos heading stack) = let
+                                                      newPos = forwardPos pos heading
+                                                      in if isNothing $ Map.lookup newPos space 
+                                                        --Is not is space, then would be out of bounds
+                                                        then (ArrowState space pos heading stack, "Position is out of bounds, pos: " ++ show newPos)
+                                                        --Otherwise we have a valid position
+                                                        else let 
+                                                          newSpace = Map.insert newPos Lambda space
+                                                          in (ArrowState newSpace pos heading stack, "")
+
+handleTurnCase :: ArrowState -> Dir -> ArrowState
+handleTurnCase (ArrowState space pos heading stack) Model.Left  = ArrowState space pos (rotateLeft heading) stack
+handleTurnCase (ArrowState space pos heading stack) Model.Right = ArrowState space pos (rotateRight heading) stack
+handleTurnCase (ArrowState space pos heading stack) _           = ArrowState space pos heading stack --Do nothing on turn forward
+
+handleCaseCase :: ArrowState -> Dir -> Alts -> ArrowState
+handleCaseCase (ArrowState space pos heading stack) dir _ = undefined
 
 --NOTE: Stack in state has already have its top Cmd removed
 handleIdentCase :: Environment -> ArrowState -> String -> (ArrowState, String)
@@ -156,3 +176,21 @@ forwardPos (x, y) heading = let
                                 South -> (0, -1)
                                 West  -> (-1, 0)
                                 in (x+dirX, y+dirY)
+
+rotateRight :: Heading -> Heading
+rotateRight heading = let 
+                      newHeading = case heading of
+                        North -> East
+                        East  -> South
+                        South -> West
+                        West  -> North
+                      in newHeading
+
+rotateLeft :: Heading -> Heading
+rotateLeft heading = let 
+                      newHeading = case heading of
+                        North -> West
+                        East  -> North
+                        South -> East
+                        West  -> South
+                      in newHeading
