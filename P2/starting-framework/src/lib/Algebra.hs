@@ -4,16 +4,17 @@ import Model
 
 
 -- Exercise 5
-type Algebra = (Program -> Bool, [Rule] -> Program, String -> [Cmds] -> Rule)
-fold :: Algebra -> Bool
-fold (doProgram, doRule, doCommands) = undefined
+--This exercise is weird. Program can only be a List of rule and nothing else so fold will always only get a program and cannot call recursively. Thus it does not make sense to have a single fold type
+type Algebra a = (Program -> a, Rule -> a, Cmd -> a, Alt -> a)
+fold :: Algebra a -> b -> a
+fold (doProgram, doRule, doCommand, doAlt) = undefined
 
 
 
 -- Exercise 6
 
 checkProgram :: Program -> Bool
-checkProgram (Program rules) = undefined
+checkProgram (Program rules) = checkAllRulesExist rules && checkRuleNamedStart rules && checkNoDuplicates rules && checkPatternMatches (concatMap getRuleCommands rules)
 
 -- Check if rule name exists
 checkAllRulesExist :: [Rule] -> Bool
@@ -61,6 +62,13 @@ getCommandPatterns' _ = []
 --Extracts rule name
 getRuleName :: Rule -> String
 getRuleName (Rule s cmds) = s
+
+getRuleCommands :: Rule -> [Cmd]
+getRuleCommands (Rule _ cmds) = cmdsToCmdList' cmds
+
+cmdsToCmdList' :: Cmds -> [Cmd]
+cmdsToCmdList' EmptyCmds = []
+cmdsToCmdList' (Cmds cmd cmds) = cmd : cmdsToCmdList' cmds
 
 --Checks if a list contains duplicates
 checkDuplicates :: Eq e => [e] -> Bool
