@@ -56,12 +56,12 @@ contentsTable =  [ (Empty   , '.' )
 
 
 -- Exercise 7
-printSpace :: Space -> Pos -> Heading -> String
+printSpace :: Space -> Pos -> Heading -> String --NOTE: player position also drawn for debug!
 printSpace s p h =
   let m = Map.fromList contentsTable
       r = (m Map.!) <$> s
       i@(mr, mc) = last $ fst <$> Map.toList r
-   in show i ++ "\r\n" ++ interspace (mc + 1) "\r\n" (snd <$> Map.toList (Map.insert p (headingToChar h ) r)) ++ "\r\n"
+   in show i ++ " " ++ show p ++ "\r\n" ++ interspace (mc + 1) "\r\n" (snd <$> Map.toList (Map.insert p (headingToChar h ) r)) ++ "\r\n"
   where
     interspace :: Int -> String -> String -> String
     interspace n s str
@@ -94,7 +94,10 @@ toEnvironment :: String -> Environment
 toEnvironment input = let
               program = parser (alexScanTokens input)
               (Program rules) = program
-              in if checkProgram program then mapAllRules rules else undefined --Replace with Map.Empty?
+              in if checkProgram program then mapAllRules rules else Map.empty --Failed parsing gives empty environment
+
+checkEnvironmentParse :: Environment -> Bool
+checkEnvironmentParse = not . Map.null
 
 --Adds all rules to a map
 mapAllRules :: [Rule] -> Environment
@@ -126,7 +129,7 @@ handleGoCase (ArrowState space pos heading stack) = let
                                                    newPos = forwardPos pos heading
                                                    in if isNothing $ Map.lookup newPos space
                                                     --Is not is space, then would be out of bounds
-                                                    then (ArrowState space pos heading stack, "Position is out of bounds, pos: " ++ show newPos)
+                                                    then (ArrowState space pos heading stack, "")
                                                     --Otherwise we have a valid position
                                                     else let
                                                       content = space Map.! newPos
@@ -138,7 +141,7 @@ handleTakeCase (ArrowState space pos heading stack) = let
                                                       newPos = forwardPos pos heading
                                                       in if isNothing $ Map.lookup newPos space
                                                         --Is not is space, then would be out of bounds
-                                                        then (ArrowState space pos heading stack, "Position is out of bounds, pos: " ++ show newPos)
+                                                        then (ArrowState space pos heading stack, "")
                                                         --Otherwise we have a valid position
                                                         else let
                                                           content = space Map.! newPos
@@ -151,7 +154,7 @@ handleMarkCase (ArrowState space pos heading stack) = let
                                                       newPos = forwardPos pos heading
                                                       in if isNothing $ Map.lookup newPos space
                                                         --Is not is space, then would be out of bounds
-                                                        then (ArrowState space pos heading stack, "Position is out of bounds, pos: " ++ show newPos)
+                                                        then (ArrowState space pos heading stack, "")
                                                         --Otherwise we have a valid position
                                                         else let
                                                           newSpace = Map.insert newPos Lambda space
@@ -183,12 +186,12 @@ handleIdentCase env (ArrowState space pos heading stack) ruleName = let
 
 --Helpers
 forwardPos :: Pos -> Heading -> Pos
-forwardPos (x, y) heading = let
+forwardPos (x, y) heading = let --Going downwards is positive X... Going Right is positive Y... Do no question it.
                               (dirX, dirY) = case heading of
-                                North -> (0, 1)
-                                East  -> (1, 0)
-                                South -> (0, -1)
-                                West  -> (-1, 0)
+                                North -> (-1, 0)
+                                East  -> (0, 1)
+                                South -> (1, 0)
+                                West  -> (0, -1)
                                 in (x+dirX, y+dirY)
 
 dirToHeading :: Dir -> Heading -> Heading

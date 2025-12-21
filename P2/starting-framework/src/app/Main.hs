@@ -56,12 +56,12 @@ main = do
       space = runParceSpace spaceText 
       arrowstate = ArrowState space pos heading [Ident "start"]
       (finalSpace, p , h) = batch environment arrowstate
-      in putStr ("final state: " ++ "\r\n" ++ "\r\n" ++ printSpace finalSpace p h ++ "\r\n")
+      in if checkEnvironmentParse environment then  putStr ("final state: " ++ "\r\n" ++ "\r\n" ++ printSpace finalSpace p h ++ "\r\n") else putStr "error: Environment did not pass sanity checks"
     else let 
       environment = toEnvironment environmentText
       space = runParceSpace spaceText 
       arrowstate = ArrowState space pos heading [Ident "start"]
-      in interactive environment arrowstate
+      in if checkEnvironmentParse environment then interactive environment arrowstate else putStr "error: Environment did not pass sanity checks"
   
   
   {-

@@ -17,8 +17,9 @@ checkProgram :: Program -> Bool
 checkProgram (Program rules) = checkAllRulesExist rules && checkRuleNamedStart rules && checkNoDuplicates rules && checkPatternMatches (concatMap getRuleCommands rules)
 
 -- Check if rule name exists
+-- I admit that using an algebra would have been useful for this, but too late now
 checkAllRulesExist :: [Rule] -> Bool
-checkAllRulesExist rules = all (checkRuleExists rules . getRuleName) rules
+checkAllRulesExist rules = all (all (checkRuleExists rules . getCommandName) . removeNonIdentCommands . getRuleCommandsIncludingCases) rules
 
 checkRuleExists :: [Rule] -> String -> Bool
 checkRuleExists existingRules ruleName = any (\x -> getRuleName x == ruleName) existingRules
@@ -32,6 +33,7 @@ checkNoDuplicates :: [Rule] -> Bool
 checkNoDuplicates = not . checkDuplicates . map getRuleName
 
 --Check all pattern matches
+--Does not check for cases within cases, just hope that it does not occur
 checkPatternMatches :: [Cmd] -> Bool
 checkPatternMatches = all checkPatternMatch
 
@@ -67,9 +69,36 @@ getRuleName (Rule s cmds) = s
 getRuleCommands :: Rule -> [Cmd]
 getRuleCommands (Rule _ cmds) = cmdsToCmdList' cmds
 
+--Gets the commands in a rule and when it is a Case command, it also extracts the rules in there
+getRuleCommandsIncludingCases :: Rule -> [Cmd]
+getRuleCommandsIncludingCases (Rule _ cmds) = let
+                                              cmdList = cmdsToCmdList' cmds
+                                              allCmds = concatMap getCaseCommandsOrSelf cmdList
+                                              in allCmds
+
 cmdsToCmdList' :: Cmds -> [Cmd]
 cmdsToCmdList' EmptyCmds = []
 cmdsToCmdList' (Cmds cmd cmds) = cmd : cmdsToCmdList' cmds
+
+removeNonIdentCommands :: [Cmd] -> [Cmd]
+removeNonIdentCommands = filter checkIsIdentCommand
+
+checkIsIdentCommand :: Cmd -> Bool
+checkIsIdentCommand (Ident _) = True
+checkIsIdentCommand _         = False
+
+getCommandName :: Cmd -> String
+getCommandName (Ident s) = s
+getCommandName _         = "Does not have name" --Should not happen
+
+--Get the cmds hiddin in a case command
+getCaseCommandsOrSelf :: Cmd -> [Cmd]
+getCaseCommandsOrSelf (Case _ alts) = getAltsCommands alts
+getCaseCommandsOrSelf cmd = [cmd]
+
+getAltsCommands :: Alts -> [Cmd]
+getAltsCommands (Alts (Alt _ cmds) EmptyAlts) = cmdsToCmdList' cmds
+getAltsCommands (Alts (Alt _ cmds) alts) = cmdsToCmdList' cmds ++ getAltsCommands alts
 
 --Checks if a list contains duplicates
 checkDuplicates :: Eq e => [e] -> Bool
