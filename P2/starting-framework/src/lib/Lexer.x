@@ -15,7 +15,7 @@ tokens :-
   "->"                           { \s -> TArrow }
   "."                            { \s -> TPeriod }
   ","                            { \s -> TComma }
-  go                             { \s -> TTake }
+  go                             { \s -> TGo }
   take                           { \s -> TTake }
   mark                           { \s -> TMark }
   nothing                        { \s -> TNothing }
