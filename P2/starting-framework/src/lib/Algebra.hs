@@ -4,23 +4,42 @@ import Model
 
 
 -- Exercise 5
---This exercise is weird. Program can only be a List of rule and nothing else so fold will always only get a program and cannot call recursively. Thus it does not make sense to have a single fold type
---In hindsight this would have working if only done on the commands for check program, but too late for that now
-type Algebra a = (Program -> a, Rule -> a, Cmd -> a, Alt -> a)
-fold :: Algebra a -> b -> a
-fold (doProgram, doRule, doCommand, doAlt) = undefined
-
-
+type Algebra a = (a, a, a, a, Dir -> a, Dir -> Alts -> a, String -> a, a -> a -> a)
+fold :: Algebra a -> a -> Cmd -> a
+fold (doGo, doTake, doMark, doNothing, doTurn, doCase, doIdent, combineCases) base = combineCases base . go
+    where
+        -- Cmd -> a
+        go Go = doGo
+        go Take = doTake
+        go Mark = doMark
+        go NothingCmd = doNothing
+        go (Turn dir) = doTurn dir
+        --Not sure if should have run doCase every time or just call all commands within it, but works fine both ways for what it is used for
+        go (Case dir EmptyAlts) = doCase dir EmptyAlts
+        go (Case dir (Alts oriAlt@(Alt _ cmds) EmptyAlts)) = combineCases (doCase dir (Alts oriAlt EmptyAlts)) (goCmds cmds)
+        go (Case dir (Alts oriAlt@(Alt _ cmds) oriAlts@(Alts alt restAlts))) = combineCases (doCase dir (Alts oriAlt oriAlts)) (combineCases (goCmds cmds) (go (Case dir (Alts alt restAlts)))) --Replace doCase with go!!!!
+        go (Ident s) = doIdent s
+        -- Cmds -> a
+        goCmds EmptyCmds = base
+        goCmds (Cmds cmd cmds) = combineCases (go cmd) (goCmds cmds)
 
 -- Exercise 6
---Was easier to do without Algebra (because I did not understand how to use Algebra correctly in this context)
 checkProgram :: Program -> Bool
 checkProgram (Program rules) = checkAllRulesExist rules && checkRuleNamedStart rules && checkNoDuplicates rules && checkPatternMatches (concatMap getRuleCommands rules)
 
 -- Check if rule name exists
--- I admit that using an algebra would have been useful for this, but too late now
 checkAllRulesExist :: [Rule] -> Bool
-checkAllRulesExist rules = all (all (checkRuleExists rules . getCommandName) . removeNonIdentCommands . getRuleCommandsIncludingCases) rules
+checkAllRulesExist rules = all (all (fold
+                            (True, --doGo
+                            True, --doTake
+                            True, --doMark
+                            True, --doNothing
+                            const True, --doTurn
+                            const . const True, --doCase
+                            checkRuleExists rules, --doIdent
+                            (&&)) --combineCases
+                            True --base case
+                            ) . getRuleCommands) rules
 
 checkRuleExists :: [Rule] -> String -> Bool
 checkRuleExists existingRules ruleName = any (\x -> getRuleName x == ruleName) existingRules
@@ -36,7 +55,17 @@ checkNoDuplicates = not . checkDuplicates . map getRuleName
 --Check all pattern matches
 --Does not check for cases within cases, just hope that it does not occur
 checkPatternMatches :: [Cmd] -> Bool
-checkPatternMatches = all checkPatternMatch
+checkPatternMatches = all (fold
+                            (True, --doGo
+                            True, --doTake
+                            True, --doMark
+                            True, --doNothing
+                            const True, --doTurn
+                            \dir alts -> checkPatternMatch (Case dir alts), --doCase
+                            const True, --doIdent
+                            (&&)) --combineCases
+                            True --base case
+                            )
 
 checkPatternMatch :: Cmd -> Bool
 checkPatternMatch cmd = let
