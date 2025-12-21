@@ -7,6 +7,7 @@ import Lexer
 import Parser
 import Options.Applicative.Common (runParser)
 import Data.Char (GeneralCategory(Space))
+import System.Environment (getArgs)
 
 -- Exercise 11
 interactive :: Environment -> ArrowState -> IO ()
@@ -29,6 +30,9 @@ batch e a = case (step e a) of
 parsecommand :: String -> (Bool, String, String, (Pos, Heading))
 parsecommand s = (\ (_ : _ : _ : m : e : s : x : y : h : _) -> (parsemode m, e, s, ((read x :: Int, read y :: Int), parseheading h)))  (words s)
 
+parsecommand' :: [String] -> (Bool, String, String, (Pos, Heading))
+parsecommand' = \ (m : e : s : x : y : h : _) -> (parsemode m, e, s, ((read x :: Int, read y :: Int), parseheading h))
+
 parsemode :: String -> Bool
 parsemode "batch" = True
 parsemode "interactive" = False
@@ -46,8 +50,8 @@ parseheading s = error ("No instance for heading: " ++ s)
 -- and write a new main function.
 main :: IO ()
 main = do
-  line <- getLine
-  (isBatch, envFileName, spaceFileName, (pos, heading)) <- return (parsecommand line)
+  line <- getArgs --getArgs is imported from System.Environment, if does not work, use getLine and then (parsecommand line) instead of (parsecommand' line)
+  (isBatch, envFileName, spaceFileName, (pos, heading)) <- return (parsecommand' line)
   environmentText <- readFile envFileName
   spaceText <- readFile spaceFileName
   if isBatch
