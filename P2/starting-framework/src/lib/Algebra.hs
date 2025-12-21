@@ -5,6 +5,7 @@ import Model
 
 -- Exercise 5
 --This exercise is weird. Program can only be a List of rule and nothing else so fold will always only get a program and cannot call recursively. Thus it does not make sense to have a single fold type
+--In hindsight this would have working if only done on the commands for check program, but too late for that now
 type Algebra a = (Program -> a, Rule -> a, Cmd -> a, Alt -> a)
 fold :: Algebra a -> b -> a
 fold (doProgram, doRule, doCommand, doAlt) = undefined

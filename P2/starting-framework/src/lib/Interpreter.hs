@@ -56,12 +56,12 @@ contentsTable =  [ (Empty   , '.' )
 
 
 -- Exercise 7
-printSpace :: Space -> Pos -> Heading -> String --NOTE: player position also drawn for debug!
+printSpace :: Space -> Pos -> Heading -> String
 printSpace s p h =
   let m = Map.fromList contentsTable
       r = (m Map.!) <$> s
       i@(mr, mc) = last $ fst <$> Map.toList r
-   in show i ++ " " ++ show p ++ "\r\n" ++ interspace (mc + 1) "\r\n" (snd <$> Map.toList (Map.insert p (headingToChar h ) r)) ++ "\r\n"
+   in show i ++ "\r\n" ++ interspace (mc + 1) "\r\n" (snd <$> Map.toList (Map.insert p (headingToChar h ) r)) ++ "\r\n"
   where
     interspace :: Int -> String -> String -> String
     interspace n s str
